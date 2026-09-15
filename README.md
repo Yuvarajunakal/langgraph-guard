@@ -8,12 +8,13 @@ Define what your agent can and can't do in a simple YAML file. Every tool call g
 
 ```bash
 pip install langgraph-guard
+```
 
+## Quick Start
 
-## QUICK START
+Create a policy file:
 
-#create Policy file:
-
+```yaml
 version: "1"
 tools:
   query_data:
@@ -22,34 +23,23 @@ tools:
     action: require_approval
   delete_account:
     action: block
-
-
+```
 
 Load it in your code:
 
-
+```python
 from langgraph_guard import load_policy
 
 policy = load_policy("policy.yaml")
 
 print(policy["query_data"].action)       # "allow"
 print(policy["delete_account"].action)   # "block"
+```
 
+## Status
 
-STATUS 
+Alpha. Under active development.
 
-ALPHA. Under active Development
-
-License
+## License
 
 MIT
-
-
-Save it.
-
-### Step 9: Install the Package in Editable Mode
-
-Back in your terminal:
-
-```powershell
-venv\Scripts\pip.exe install -e .
