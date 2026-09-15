@@ -10,9 +10,9 @@ Define what your agent can and can't do in a simple YAML file. Every tool call g
 pip install langgraph-guard
 
 
-QUICK START
+## QUICK START
 
-create Policy file:
+#create Policy file:
 
 version: "1"
 tools:
