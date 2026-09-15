@@ -1,0 +1,13 @@
+version: "1"
+
+tools:
+  query_data:
+    action: allow
+
+  send_email:
+    action: require_approval
+    reason: "External emails need human review"
+
+  delete_account:
+    action: block
+    reason: "Account deletion is forbidden for autonomous agents"
