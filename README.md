@@ -36,10 +36,69 @@ print(policy["query_data"].action)       # "allow"
 print(policy["delete_account"].action)   # "block"
 ```
 
+## Live Demo
+
+The guardrails enforce three outcomes: **allow**, **require approval**, and **block**.
+
+Running `examples/demo_mock.py`:
+
+```
+============================================================
+SCENARIO 1: Agent queries the database (allowed)
+============================================================
+
+  Agent receives: SUCCESS: [DB] Query executed: SELECT COUNT(*) FROM users -> 42 rows
+
+============================================================
+SCENARIO 2: Agent sends an email (requires approval)
+============================================================
+
+  ⚠️  APPROVAL REQUIRED
+     Tool:   send_email
+     Args:   {'to': 'newuser@example.com', 'subject': 'Welcome!', 'body': 'Thanks for signing up.'}
+     Reason: External emails need human review
+
+     Approve? (y/n): y
+
+  Agent receives: APPROVED & EXECUTED: [EMAIL] Sent to newuser@example.com: Welcome!
+
+============================================================
+SCENARIO 3: Agent tries to delete an account (blocked)
+============================================================
+
+  Agent receives: BLOCKED: Tool 'delete_account' is blocked by policy: Account deletion is forbidden for autonomous agents
+```
+
+### With a Real LLM (Ollama)
+
+The same behavior works with a real model deciding what to call. Running `examples/demo_agent_approval.py`:
+
+```
+============================================================
+USER: Send a welcome email to newuser@example.com with subject 'Welcome!' and body 'Thanks for signing up.'
+============================================================
+
+  ⚠️  APPROVAL REQUIRED
+     Tool:   send_email
+     Args:   {'to': 'newuser@example.com', 'subject': 'Welcome!', 'body': 'Thanks for signing up.'}
+     Reason: External emails need human review
+
+     Approve? (y/n): y
+
+--- Tool calls made during this run ---
+  -> send_email({'subject': 'Welcome!', 'body': 'Thanks for signing up.', 'to': 'newuser@example.com'})
+     tool result: APPROVED & EXECUTED: Email successfully sent to newuser@example.com with subject 'Welcome!'. Confirmation ID: MSG-70971
+
+=== GUARDRAIL VERDICT ===
+✅ Tool was APPROVED by human and executed
+```
+
+The model wanted to send the email. The policy paused it. A human approved it. The email went out. That's the whole product.
+
 ## Status
 
 Alpha. Under active development.
 
 ## License
 
-MIT
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
