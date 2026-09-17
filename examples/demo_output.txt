@@ -1,0 +1,32 @@
+############################################################
+# langgraph-guard mock demo
+############################################################
+
+============================================================
+SCENARIO 1: Agent queries the database (allowed)
+============================================================
+
+  Agent receives: SUCCESS: [DB] Query executed: SELECT COUNT(*) FROM users -> 42 rows
+
+============================================================
+SCENARIO 2: Agent sends an email (requires approval)
+============================================================
+
+  ⚠️  APPROVAL REQUIRED
+     Tool:   send_email
+     Args:   {'to': 'newuser@example.com', 'subject': 'Welcome!', 'body': 'Thanks for signing up.'}
+     Reason: External emails need human review
+
+     Approve? (y/n): y
+
+  Agent receives: APPROVED & EXECUTED: [EMAIL] Sent to newuser@example.com: Welcome!
+
+============================================================
+SCENARIO 3: Agent tries to delete an account (blocked)
+============================================================
+
+  Agent receives: BLOCKED: Tool 'delete_account' is blocked by policy: Account deletion is forbidden for autonomous agents
+
+############################################################
+# Demo complete
+############################################################
