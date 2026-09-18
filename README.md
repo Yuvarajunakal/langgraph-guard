@@ -95,6 +95,46 @@ USER: Send a welcome email to newuser@example.com with subject 'Welcome!' and bo
 
 The model wanted to send the email. The policy paused it. A human approved it. The email went out. That's the whole product.
 
+
+## LangGraph Integration
+
+Use `GuardNode` inside any LangGraph graph to enforce policy with native `interrupt()`:
+
+```python
+from langgraph.checkpoint.memory import MemorySaver
+from langgraph.graph import END, START, StateGraph
+from langgraph.types import Command
+
+from langgraph_guard import load_policy, prompt_cli
+from langgraph_guard.integrations.langgraph import GuardNode
+
+policy = load_policy("policy.yaml")
+guard = GuardNode(policy)
+
+def send_email_node(state):
+    return {"result": guard.run("send_email", state["args"], _real_send_email)}
+
+builder = StateGraph(State)
+builder.add_node("send_email", send_email_node)
+builder.add_edge(START, "send_email")
+builder.add_edge("send_email", END)
+
+graph = builder.compile(checkpointer=MemorySaver())
+config = {"configurable": {"thread_id": "user-1"}}
+
+# First pass — pauses at interrupt()
+result = graph.invoke(initial_state, config=config)
+
+# Human approves
+payload = result["__interrupt__"][0].value
+approved = prompt_cli(payload["tool_name"], payload["args"], payload.get("reason", ""))
+
+# Resume the graph
+final = graph.invoke(Command(resume=approved), config=config)
+```
+
+The graph pauses at the exact tool call, saves state to the checkpointer, and resumes seamlessly with the human's decision.
+
 ## Status
 
 Alpha. Under active development.

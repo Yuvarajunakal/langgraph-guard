@@ -37,3 +37,6 @@ Repository = "https://github.com/Yuvarajunakal/langgraph-guard"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+langgraph_guard = ["py.typed"]
