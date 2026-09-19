@@ -5,3 +5,6 @@ __pycache__/
 
 *.jsonl
 examples/audit.jsonl
+*.egg-info/
+dist/
+build/
