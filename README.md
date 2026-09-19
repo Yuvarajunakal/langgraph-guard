@@ -2,7 +2,11 @@
 
 Policy enforcement and guardrails for LangGraph AI agents.
 
-Define what your agent can and can't do in a simple YAML file. Every tool call gets checked before it executes. Dangerous actions get blocked. Suspicious actions get escalated for human approval.
+Define what your agent can and can't do in a simple YAML file. Every tool call gets checked before it executes. Dangerous actions get blocked. Suspicious actions get escalated for human approval. Every decision is recorded in a tamper-evident audit log.
+
+## Why
+
+AI agents can now take real actions — send emails, query databases, call APIs, delete accounts. Without guardrails, a single misaligned decision can cost real money or leak real data. `langgraph-guard` gives you a single chokepoint where every action is checked against your rules, paused for human approval when needed, and cryptographically logged.
 
 ## Install
 
@@ -10,9 +14,17 @@ Define what your agent can and can't do in a simple YAML file. Every tool call g
 pip install langgraph-guard
 ```
 
+For LangGraph integration (uses `interrupt()` for human-in-the-loop):
+
+```bash
+pip install "langgraph-guard[langgraph]"
+```
+
+Requires Python 3.10+.
+
 ## Quick Start
 
-Create a policy file:
+**1. Create a policy file** (`policy.yaml`):
 
 ```yaml
 version: "1"
@@ -21,84 +33,34 @@ tools:
     action: allow
   send_email:
     action: require_approval
+    reason: "External emails need human review"
   delete_account:
     action: block
+    reason: "Account deletion is forbidden for autonomous agents"
 ```
 
-Load it in your code:
+**2. Load it and check tool calls:**
 
 ```python
-from langgraph_guard import load_policy
+from langgraph_guard import load_policy, guarded_tool_call, GovernanceBlockedError
 
 policy = load_policy("policy.yaml")
 
-print(policy["query_data"].action)       # "allow"
-print(policy["delete_account"].action)   # "block"
+try:
+    result = guarded_tool_call(
+        "delete_account",
+        {"user_id": 123},
+        policy,
+        my_delete_function,
+    )
+except GovernanceBlockedError as e:
+    print(f"Blocked: {e}")
+    # -> Blocked: Tool 'delete_account' is blocked by policy: Account deletion...
 ```
-
-## Live Demo
-
-The guardrails enforce three outcomes: **allow**, **require approval**, and **block**.
-
-Running `examples/demo_mock.py`:
-
-```
-============================================================
-SCENARIO 1: Agent queries the database (allowed)
-============================================================
-
-  Agent receives: SUCCESS: [DB] Query executed: SELECT COUNT(*) FROM users -> 42 rows
-
-============================================================
-SCENARIO 2: Agent sends an email (requires approval)
-============================================================
-
-  ⚠️  APPROVAL REQUIRED
-     Tool:   send_email
-     Args:   {'to': 'newuser@example.com', 'subject': 'Welcome!', 'body': 'Thanks for signing up.'}
-     Reason: External emails need human review
-
-     Approve? (y/n): y
-
-  Agent receives: APPROVED & EXECUTED: [EMAIL] Sent to newuser@example.com: Welcome!
-
-============================================================
-SCENARIO 3: Agent tries to delete an account (blocked)
-============================================================
-
-  Agent receives: BLOCKED: Tool 'delete_account' is blocked by policy: Account deletion is forbidden for autonomous agents
-```
-
-### With a Real LLM (Ollama)
-
-The same behavior works with a real model deciding what to call. Running `examples/demo_agent_approval.py`:
-
-```
-============================================================
-USER: Send a welcome email to newuser@example.com with subject 'Welcome!' and body 'Thanks for signing up.'
-============================================================
-
-  ⚠️  APPROVAL REQUIRED
-     Tool:   send_email
-     Args:   {'to': 'newuser@example.com', 'subject': 'Welcome!', 'body': 'Thanks for signing up.'}
-     Reason: External emails need human review
-
-     Approve? (y/n): y
-
---- Tool calls made during this run ---
-  -> send_email({'subject': 'Welcome!', 'body': 'Thanks for signing up.', 'to': 'newuser@example.com'})
-     tool result: APPROVED & EXECUTED: Email successfully sent to newuser@example.com with subject 'Welcome!'. Confirmation ID: MSG-70971
-
-=== GUARDRAIL VERDICT ===
-✅ Tool was APPROVED by human and executed
-```
-
-The model wanted to send the email. The policy paused it. A human approved it. The email went out. That's the whole product.
-
 
 ## LangGraph Integration
 
-Use `GuardNode` inside any LangGraph graph to enforce policy with native `interrupt()`:
+Use `GuardNode` inside any LangGraph graph for native human-in-the-loop:
 
 ```python
 from langgraph.checkpoint.memory import MemorySaver
@@ -135,43 +97,91 @@ final = graph.invoke(Command(resume=approved), config=config)
 
 The graph pauses at the exact tool call, saves state to the checkpointer, and resumes seamlessly with the human's decision.
 
-
 ## Audit Trail
 
-Every guardrail decision is recorded in a hash-chained JSONL log. Tampering with any entry breaks the chain and is detected.
+Every decision is recorded in a hash-chained JSONL log. Tampering with any entry breaks the chain and is detected.
 
 ```python
 from langgraph_guard import AuditLog
+from langgraph_guard.integrations.langgraph import GuardNode
 
 audit = AuditLog("audit.jsonl")
-
-# Decisions are appended automatically by GuardNode
 guard = GuardNode(policy, audit=audit)
 
-# Verify the chain at any time
+# After running your agent:
 ok, failed_at = audit.verify()
 assert ok, f"Tampering detected at sequence {failed_at}"
 
-# Inspect recent decisions
 for entry in audit.tail(10):
     print(f"{entry.sequence} | {entry.tool_name} | {entry.decision}")
 ```
 
-Running `examples/demo_interrupt.py` produces:
+Each entry stores its own SHA-256 hash and the hash of the previous entry. If anyone edits, removes, or reorders entries, `verify()` reports the exact sequence number where the chain breaks.
 
-```
-=== AUDIT LOG ===
-Chain intact: True
-  seq=1 tool=send_email decision=approved
-  seq=2 tool=send_email decision=denied
+## Policy Schema
+
+```yaml
+version: "1"
+
+tools:
+  <tool_name>:
+    action: allow | block | require_approval
+    reason: "optional explanation shown to humans and logs"
 ```
 
-Each entry stores its own SHA-256 hash and the hash of the previous entry, forming a cryptographic chain. If anyone edits, removes, or reorders entries, `verify()` reports the exact sequence number where the chain breaks.
+- **`allow`** — the tool runs immediately
+- **`block`** — the tool never runs; the agent receives a `BLOCKED` message
+- **`require_approval`** — the graph pauses; a human decides, then the graph resumes
+
+## API Reference
+
+### `load_policy(path: str) -> dict[str, ToolPolicy]`
+
+Load a YAML policy file. Raises `PolicyError` if malformed.
+
+### `guarded_tool_call(tool_name, args, policy, tool_fn) -> Any`
+
+Execute a tool following policy. Raises:
+- `GovernanceBlockedError` if the policy says `block`
+- `ApprovalRequiredError` if the policy says `require_approval`
+- `ToolNotFoundError` if the tool isn't in the policy
+
+### `GuardNode(policy, audit=None)`
+
+LangGraph integration. `.run(tool_name, args, tool_fn)` behaves like `guarded_tool_call` but uses `interrupt()` for approvals.
+
+### `AuditLog(path)`
+
+Hash-chained audit log. Methods:
+- `.append(tool_name, args, decision, reason="")` — write an entry
+- `.verify() -> (bool, Optional[int])` — check integrity
+- `.tail(n=10) -> list[AuditEntry]` — recent entries
+
+### `prompt_cli(tool_name, args, reason="") -> bool`
+
+Interactive terminal approval prompt.
+
+## Demos
+
+- `examples/demo_mock.py` — deterministic, shows all three branches in 10 seconds
+- `examples/demo_agent.py` — real LLM (Ollama) decides which tool to call
+- `examples/demo_interrupt.py` — full interrupt/resume flow with audit logging
+
+## Development
+
+```bash
+git clone https://github.com/Yuvarajunakal/langgraph-guard.git
+cd langgraph-guard
+python -m venv venv
+venv\Scripts\activate    # Windows
+pip install -e ".[dev]"
+pytest tests/ -v
+```
 
 ## Status
 
-Alpha. Under active development.
+**Alpha** — the core API is stable, but expect additions. See [CHANGELOG.md](CHANGELOG.md) for what's shipped.
 
 ## License
 
-This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
+MIT — see [LICENSE](LICENSE).
