@@ -135,6 +135,39 @@ final = graph.invoke(Command(resume=approved), config=config)
 
 The graph pauses at the exact tool call, saves state to the checkpointer, and resumes seamlessly with the human's decision.
 
+
+## Audit Trail
+
+Every guardrail decision is recorded in a hash-chained JSONL log. Tampering with any entry breaks the chain and is detected.
+
+```python
+from langgraph_guard import AuditLog
+
+audit = AuditLog("audit.jsonl")
+
+# Decisions are appended automatically by GuardNode
+guard = GuardNode(policy, audit=audit)
+
+# Verify the chain at any time
+ok, failed_at = audit.verify()
+assert ok, f"Tampering detected at sequence {failed_at}"
+
+# Inspect recent decisions
+for entry in audit.tail(10):
+    print(f"{entry.sequence} | {entry.tool_name} | {entry.decision}")
+```
+
+Running `examples/demo_interrupt.py` produces:
+
+```
+=== AUDIT LOG ===
+Chain intact: True
+  seq=1 tool=send_email decision=approved
+  seq=2 tool=send_email decision=denied
+```
+
+Each entry stores its own SHA-256 hash and the hash of the previous entry, forming a cryptographic chain. If anyone edits, removes, or reorders entries, `verify()` reports the exact sequence number where the chain breaks.
+
 ## Status
 
 Alpha. Under active development.

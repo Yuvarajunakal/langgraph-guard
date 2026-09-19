@@ -9,6 +9,7 @@ from .errors import (
 )
 from .interceptor import check_policy, guarded_tool_call
 from .approval import prompt_cli
+from .audit import AuditLog, AuditEntry
 
 __version__ = "0.1.0"
 __all__ = [
@@ -22,4 +23,6 @@ __all__ = [
     "check_policy",
     "guarded_tool_call",
     "prompt_cli",
+    "AuditLog",
+    "AuditEntry",
 ]

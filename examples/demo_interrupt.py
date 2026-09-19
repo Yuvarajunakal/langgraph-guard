@@ -17,15 +17,17 @@ from langgraph.graph import END, START, StateGraph
 from langgraph.types import Command
 from typing import TypedDict
 
-from langgraph_guard import load_policy, prompt_cli
+from langgraph_guard import load_policy, prompt_cli, AuditLog
 from langgraph_guard.integrations.langgraph import GuardNode
 
 
-# --- Policy -----------------------------------------------------------------
-
 POLICY_PATH = Path(__file__).parent / "basic_policy.yaml"
 policy = load_policy(POLICY_PATH)
-guard = GuardNode(policy)
+
+AUDIT_PATH = Path(__file__).parent / "audit.jsonl"
+audit = AuditLog(AUDIT_PATH)
+
+guard = GuardNode(policy, audit=audit)
 
 
 # --- "Real" tool implementations --------------------------------------------
@@ -108,6 +110,13 @@ def run_scenario() -> None:
         config=config,
     )
     print(f"\nFinal result: {final.get('result')}")
+
+    print()
+    print("=== AUDIT LOG ===")
+    ok, seq = audit.verify()
+    print(f"Chain intact: {ok}")
+    for entry in audit.tail(3):
+        print(f"  seq={entry.sequence} tool={entry.tool_name} decision={entry.decision}")
 
 if __name__ == "__main__":
     run_scenario()
