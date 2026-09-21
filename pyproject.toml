@@ -3,8 +3,8 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "langgraph-guard-yuvaraj"
-version = "0.1.0"
+name = "langgraph-guardrail"
+version = "0.1.1"
 description = "Policy enforcement and guardrails for LangGraph AI agents"
 readme = "README.md"
 requires-python = ">=3.10"
