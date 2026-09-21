@@ -1,4 +1,4 @@
-# langgraph-guard-yuvaraj
+# langgraph-guardrail
 
 [![PyPI version](https://badge.fury.io/py/langgraph-guard-yuvaraj.svg)](https://pypi.org/project/langgraph-guard-yuvaraj/)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
@@ -10,18 +10,18 @@ Define what your agent can and can't do in a simple YAML file. Every tool call g
 
 ## Why
 
-AI agents can now take real actions — send emails, query databases, call APIs, delete accounts. Without guardrails, a single misaligned decision can cost real money or leak real data. `langgraph-guard-yuvaraj` gives you a single chokepoint where every action is checked against your rules, paused for human approval when needed, and cryptographically logged.
+AI agents can now take real actions — send emails, query databases, call APIs, delete accounts. Without guardrails, a single misaligned decision can cost real money or leak real data. `langgraph-guardrail` gives you a single chokepoint where every action is checked against your rules, paused for human approval when needed, and cryptographically logged.
 
 ## Install
 
 ```bash
-pip install langgraph-guard-yuvaraj
+pip install langgraph-guardrail
 ```
 
 For LangGraph integration (uses `interrupt()` for human-in-the-loop):
 
 ```bash
-pip install "langgraph-guard-yuvaraj[langgraph]"
+pip install "langgraph-guardrail[langgraph]"
 ```
 
 Requires Python 3.10+.
