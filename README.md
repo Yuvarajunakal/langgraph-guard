@@ -4,6 +4,8 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
+![langgraph-guard demo](docs/demo.gif)
+
 Policy enforcement and guardrails for LangGraph AI agents.
 
 Define what your agent can and can't do in a simple YAML file. Every tool call gets checked before it executes. Dangerous actions get blocked. Suspicious actions get escalated for human approval. Every decision is recorded in a tamper-evident audit log.
