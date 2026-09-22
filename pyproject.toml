@@ -48,10 +48,11 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/Yuvarajunakal/langgraph-guard"
-Repository = "https://github.com/Yuvarajunakal/langgraph-guard"
-Issues = "https://github.com/Yuvarajunakal/langgraph-guard/issues"
-Changelog = "https://github.com/Yuvarajunakal/langgraph-guard/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/Yuvarajunakal/langgraph-guardrail"
+Repository = "https://github.com/Yuvarajunakal/langgraph-guardrail"
+Issues = "https://github.com/Yuvarajunakal/langgraph-guardrail/issues"
+Changelog = "https://github.com/Yuvarajunakal/langgraph-guardrail/blob/main/CHANGELOG.md"
+
 
 [tool.setuptools.packages.find]
 where = ["src"]

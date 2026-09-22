@@ -33,4 +33,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   langgraph-guard[langgraph]`).
 - No web dashboard yet — audit inspection is via Python API or the CLI.
 
-[0.1.0]: https://github.com/Yuvarajunakal/langgraph-guard/releases/tag/v0.1.0
+[0.1.1]: https://github.com/Yuvarajunakal/langgraph-guardrail/releases/tag/v0.1.1
