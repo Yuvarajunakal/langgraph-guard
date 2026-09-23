@@ -6,7 +6,7 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![CI](https://github.com/Yuvarajunakal/langgraph-guardrail/actions/workflows/ci.yml/badge.svg)](https://github.com/Yuvarajunakal/langgraph-guardrail/actions/workflows/ci.yml)
-![langgraph-guard demo](docs/demo.gif)
+![langgraph-guardrail demo](docs/demo.gif)
 
 Policy enforcement and guardrails for LangGraph AI agents.
 
@@ -178,8 +178,8 @@ Interactive terminal approval prompt.
 ## Development
 
 ```bash
-git clone https://github.com/Yuvarajunakal/langgraph-guard.git
-cd langgraph-guard
+git clone https://github.com/Yuvarajunakal/langgraph-guardrail.git
+cd langgraph-guardrail
 python -m venv venv
 venv\Scripts\activate    # Windows
 pip install -e ".[dev]"

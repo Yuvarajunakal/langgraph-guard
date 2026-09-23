@@ -30,7 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Audit log verification is local — no distributed consensus.
 - LangGraph integration requires `langgraph>=0.2.0` (install with `pip install
-  langgraph-guard[langgraph]`).
+  langgraph-guardrail[langgraph]`).
 - No web dashboard yet — audit inspection is via Python API or the CLI.
 
 [0.1.1]: https://github.com/Yuvarajunakal/langgraph-guardrail/releases/tag/v0.1.1
